@@ -100,11 +100,25 @@ export function summaryFromDetailHtml(html) {
 }
 
 async function fetchSummary(item, fetchImpl) {
-  const response = await fetchImpl(item.official, {
-    headers: { accept: "text/html,application/xhtml+xml" }
-  });
-  if (!response.ok) throw new Error(`BORA respondió con HTTP ${response.status}`);
-  return summaryFromDetailHtml(await response.text());
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetchImpl(item.official, {
+        headers: {
+          accept: "text/html,application/xhtml+xml",
+          "accept-language": "es-AR,es;q=0.9",
+          "user-agent": "Radar-BORA/1.0 (+https://pedbach-maker.github.io/radar-bora-arg/)"
+        }
+      });
+      if (response.ok) return summaryFromDetailHtml(await response.text());
+      lastError = new Error(`BORA respondió con HTTP ${response.status}`);
+      if (response.status !== 429 && response.status < 500) break;
+    } catch (error) {
+      lastError = error;
+    }
+    if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 750));
+  }
+  throw lastError || new Error("No se pudo consultar la ficha oficial.");
 }
 
 export async function enrichNormSummaries(items, { fetchImpl = fetch, concurrency = 5, force = false } = {}) {

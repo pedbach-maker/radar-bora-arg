@@ -50,12 +50,15 @@ const payload = JSON.parse(responseText);
 if (!Array.isArray(payload.items) || payload.syncStatus === "error") {
   throw new Error("La actualización no produjo un feed válido.");
 }
+const summariesBefore = payload.items.filter((item) => item.summarySource === "articulo-1").length;
 payload.items = await enrichNormSummaries(payload.items, {
   force: process.env.REFRESH_SUMMARIES === "1"
 });
 payload.itemCount = payload.items.length;
+const summariesAfter = payload.items.filter((item) => item.summarySource === "articulo-1").length;
 
 await mkdir(new URL("../docs/", import.meta.url), { recursive: true });
 await writeFile(feedUrl, JSON.stringify(payload, null, 2) + "\n", "utf8");
 console.log(`Feed actualizado: ${payload.itemCount} normas, estado ${payload.syncStatus}`);
+console.log(`Resúmenes basados en texto oficial: ${summariesAfter} (${summariesAfter - summariesBefore} nuevos)`);
 
