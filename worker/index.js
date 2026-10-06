@@ -1332,8 +1332,19 @@ async function syncBora(env) {
     throw new Error("No se pudo validar una edición normativa del BORA.");
   }
 
+  const previousItems = previous?.items || [];
+  const previousByOfficial = new Map(previousItems.map((item) => [item.official, item]));
+  const refreshedItems = newItems.map((item) => {
+    const storedItem = previousByOfficial.get(item.official);
+    if (!storedItem?.summarySource) return item;
+    return {
+      ...item,
+      summary: storedItem.summary,
+      summarySource: storedItem.summarySource
+    };
+  });
   const items = Array.from(new Map(
-    [...(previous?.items || []), ...newItems].map((item) => [item.official, item])
+    [...previousItems, ...refreshedItems].map((item) => [item.official, item])
   ).values()).sort((left, right) =>
     right.date.localeCompare(left.date) || left.title.localeCompare(right.title, "es")
   );

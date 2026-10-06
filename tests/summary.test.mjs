@@ -19,7 +19,7 @@ test("detecta códigos internos que no son resúmenes", () => {
 test("extrae y simplifica el primer artículo operativo", () => {
   assert.equal(
     summaryFromDetailHtml(detail),
-    "Aprueba el documento “Lineamientos para la tramitación de certificados de buenas prácticas de fabricación de plantas sitas en el extranjero”, que forma parte de la presente disposición."
+    "Aprueba “Lineamientos para la tramitación de certificados de buenas prácticas de fabricación de plantas sitas en el extranjero”."
   );
 });
 
@@ -65,6 +65,27 @@ test("resume publicaciones sintetizadas con numeración romana", () => {
   );
 });
 
+test("admite artículos con N° antes del número", () => {
+  const numberedArticle = '<div id="cuerpoDetalleAviso"><p>LA DIRECTORA DISPONE: ARTICULO N°1.- Declárese homologado el acuerdo celebrado entre UPCN, por el sector sindical, y el INSSJP, por el sector empleador. ARTICULO 2°.- Comuníquese.</p></div></div></div>';
+  assert.equal(summaryFromDetailHtml(numberedArticle), "Homologa un acuerdo entre UPCN y el INSSJP.");
+});
+
+test("prioriza el contenido económico de un acuerdo cuando está explicitado", () => {
+  const agreement = '<div id="cuerpoDetalleAviso"><p>Que, mediante el acuerdo referido, las partes pactan incrementar el valor de las Unidades Retributivas. LA DIRECTORA DISPONE: ARTÍCULO 1°.- Declárese homologado el acuerdo celebrado entre UPCN, por el sector sindical, y el INSSJP, por el sector empleador. ARTÍCULO 2°.- Comuníquese.</p></div></div></div>';
+  assert.equal(
+    summaryFromDetailHtml(agreement),
+    "Homologa un acuerdo para incrementar el valor de las Unidades Retributivas entre UPCN y el INSSJP."
+  );
+});
+
+test("explica el núcleo de la modificación sobre VNEI de la CNV", () => {
+  const cnv = '<div id="cuerpoDetalleAviso"><p>La CNV regula la actuación del ACRyP respecto de VNEI vencidos e impagos.</p></div></div></div>';
+  assert.equal(
+    summaryFromDetailHtml(cnv),
+    "Modifica las reglas de la CNV para valores negociables electrónicos impagos: habilita su ejecución y transferencia, y redefine qué agentes pueden emitirlos."
+  );
+});
+
 test("enriquece una norma desde su ficha oficial", async () => {
   const [item] = await enrichNormSummaries([{
     official: "https://example.test/norma",
@@ -73,7 +94,7 @@ test("enriquece una norma desde su ficha oficial", async () => {
     fetchImpl: async () => new Response(detail),
     concurrency: 1
   });
-  assert.match(item.summary, /^Aprueba el documento/);
+  assert.match(item.summary, /^Aprueba “Lineamientos/);
   assert.equal(item.summarySource, "articulo-1");
 });
 

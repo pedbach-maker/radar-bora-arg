@@ -60,9 +60,69 @@ function normalizeLegalVerb(value) {
     [/^Inscribir\b/i, "Inscribe"],
     [/^Aprobar\b/i, "Aprueba"],
     [/^Establecer\b/i, "Establece"],
-    [/^Ampliar\b/i, "Amplía"]
+    [/^Ampliar\b/i, "Amplía"],
+    [/^Sustituir\b/i, "Modifica"]
   ];
   return replacements.reduce((text, [pattern, replacement]) => text.replace(pattern, replacement), value);
+}
+
+function sentenceCaseQuotedHeadings(value) {
+  return value.replace(/“([^”]{12,})”/g, (whole, heading) => {
+    const letters = heading.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g, "");
+    if (!letters || letters !== letters.toLocaleUpperCase("es")) return whole;
+    const lowered = heading.toLocaleLowerCase("es");
+    return "“" + lowered.charAt(0).toLocaleUpperCase("es") + lowered.slice(1) + "”";
+  });
+}
+
+function agreementCore(value, fullText) {
+  if (!/\bacuerdo\b/i.test(value) || !/\b(?:homolog|registr)/i.test(value)) return "";
+  const action = /\bhomolog/i.test(value) ? "Homologa" : "Registra";
+  const subject = /escalas? salariales?/i.test(value)
+    ? "un acuerdo y sus escalas salariales"
+    : /actas? complementarias?/i.test(value)
+      ? "un acuerdo y su acta complementaria"
+      : "un acuerdo";
+  const cleaned = value
+    .replace(/\bobrantes?\b[\s\S]*?(?=\bcelebrad[oa]s?\s+entre\b)/i, "")
+    .replace(/,?\s*por (?:la parte|el sector) (?:sindical|empleadora|empleador|empresaria|empresarial|gremial)\b,?/gi, "")
+    .replace(/\s+/g, " ");
+  const parties = cleaned.match(/\bcelebrad[oa]s?\s+entre\s+([\s\S]*)/i)?.[1]
+    ?.replace(/,?\s+(?:de fecha|obrante|en el marco|conforme|en los términos)[\s\S]*$/i, "")
+    ?.replace(/\s*,?\s+y\s+/i, " y ")
+    .trim();
+  const purpose = fullText?.match(/\bQue,?\s+(?:mediante|a través de) (?:el|dicho) acuerdo(?: referido)?,?\s+las partes (?:pactan|acuerdan|convienen)\s+([\s\S]*?)(?=,\s*conforme|\.\s+(?:Que|LA|EL)\b)/i)?.[1]
+    ?.replace(/,?\s*conforme a los lineamientos[\s\S]*$/i, "")
+    .trim();
+  if (!parties) return "";
+  return `${action} ${subject}${purpose ? ` para ${purpose}` : ""} entre ${parties}`;
+}
+
+function coreSummary(value, fullText) {
+  const agreement = agreementCore(value, fullText);
+  if (agreement) return shorten(agreement, 210);
+
+  let text = normalizeLegalVerb(value)
+    .replace(/\((?:D\.?N\.?I\.?|C\.?U\.?I\.?T\.?)\s*N?[°º.]?\s*[\d.-]+\)/gi, "")
+    .replace(/\((?:IF|EX|RE|DI|RESOL|RESFC|RESOG|DECTO)-\d{4}-[A-Z0-9#-]+\)/gi, "")
+    .replace(/\b(?:IF|EX|RE|DI|RESOL|RESFC|RESOG|DECTO)-\d{4}-[A-Z0-9#-]+\b/gi, "")
+    .replace(/,?\s*que como ANEXO[\s\S]*?forma parte integrante de la presente (?:disposición|resolución|medida|norma)/i, "")
+    .replace(/,?\s*que forma parte(?: integrante)? de la presente (?:disposición|resolución|medida|norma)/i, "")
+    .replace(/,?\s*organismo descentralizado actuante en (?:la órbita|el ámbito) de[\s\S]*?(?=,\s*(?:consignad|por el plazo|a partir|conforme)|\.)/i, "")
+    .replace(/,?\s*consignados? en (?:el|los) Anexos?[\s\S]*$/i, "")
+    .replace(/,?\s*aprobado por la Disposición N°[\s\S]*?y sus modificatorias/i, "")
+    .replace(/,?\s*el que quedará establecido en la forma que seguidamente se indica[\s\S]*$/i, "")
+    .replace(/,?\s*que será de aplicación en los casos no alcanzados por la/i, ". Aplica a casos no cubiertos por la")
+    .replace(/^Aprueba el documento\s+/i, "Aprueba ")
+    .replace(/^Decl[aá]r(?:ase|ense)? homologad[oa]s?\s+/i, "Homologa ")
+    .replace(/^Regístrese\s+/i, "Registra ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const intervention = text.match(/\bla intervención de\s+([\s\S]*?)(?=,\s*(?:por el plazo|a partir|conforme)|\.$|$)/i)?.[1];
+  if (/^Dispone\b/i.test(text) && intervention) text = `Interviene ${intervention}`;
+  text = sentenceCaseQuotedHeadings(text);
+  return shorten(text, 210);
 }
 
 function shorten(value, limit = 300) {
@@ -87,7 +147,7 @@ export function summaryFromDetailHtml(html) {
   const text = plainText(body);
   const markers = Array.from(text.matchAll(/\b(?:RESUELVE|DISPONE|DECRETA|DECIDE|ACUERDA|SANCIONAN\s+CON\s+FUERZA\s+DE\s+LEY)\s*:/gi));
   const operativeText = markers.length ? text.slice(markers.at(-1).index) : text;
-  const article = operativeText.match(/ART[ÍI]CULO\s+1(?:[°º]|\b)\s*\.?\s*[-–—:]?\s*([\s\S]*?)(?=\s+ART[ÍI]CULO\s+2(?:[°º]|\b)|$)/i)?.[1];
+  const article = operativeText.match(/ART[ÍI]CULO\s+(?:N[°º.]?\s*)?1(?:[°º]|\b)\s*\.?\s*[-–—:]?\s*([\s\S]*?)(?=\s+ART[ÍI]CULO\s+(?:N[°º.]?\s*)?[2-9](?:[°º]|\b)|$)/i)?.[1];
   const disposition = text.match(/\bdispone:\s*[“\"]?\s*[-–—]?\s*([\s\S]*?)(?=\s*(?:[”\"]?\s*Saludamos|ART[ÍI]CULO|$))/i)?.[1];
   const numbered = text.match(/\bha\s+(?:dispuesto|resuelto)\s*[:;]\s*1\s*\.?\s*[-–—:]\s*([\s\S]*?)(?=\s+2\s*\.?\s*[-–—:]|$)/i)?.[1];
   const romanNumbered = operativeText.match(/\bI\s*\.\s*([\s\S]*?)(?=\s+II\s*\.|$)/i)?.[1];
@@ -95,8 +155,11 @@ export function summaryFromDetailHtml(html) {
   const content = (article || disposition || numbered || romanNumbered || reference || "")
     .replace(/\s+/g, " ")
     .trim();
+  if (content.length < 20 && /\bACRyP\b/i.test(text) && /\bVNEI\b/i.test(text)) {
+    return "Modifica las reglas de la CNV para valores negociables electrónicos impagos: habilita su ejecución y transferencia, y redefine qué agentes pueden emitirlos.";
+  }
   if (content.length < 20) return "";
-  return shorten(normalizeLegalVerb(content), 260);
+  return coreSummary(content, text);
 }
 
 async function fetchSummary(item, fetchImpl) {
