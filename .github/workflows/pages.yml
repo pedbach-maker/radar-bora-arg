@@ -32,5 +32,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/index.html docs/feed.json
           git diff --cached --quiet || git commit -m "Actualizar Radar BORA [skip ci]"
+          git pull --rebase origin main
           git push
 
