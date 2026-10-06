@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import worker from "../worker/index.js";
+import { enrichNormSummaries } from "./lib/norm-summary.mjs";
 
 const feedUrl = new URL("../docs/feed.json", import.meta.url);
 let stored = null;
@@ -49,6 +50,10 @@ const payload = JSON.parse(responseText);
 if (!Array.isArray(payload.items) || payload.syncStatus === "error") {
   throw new Error("La actualización no produjo un feed válido.");
 }
+payload.items = await enrichNormSummaries(payload.items, {
+  force: process.env.REFRESH_SUMMARIES === "1"
+});
+payload.itemCount = payload.items.length;
 
 await mkdir(new URL("../docs/", import.meta.url), { recursive: true });
 await writeFile(feedUrl, JSON.stringify(payload, null, 2) + "\n", "utf8");
