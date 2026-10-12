@@ -9743,13 +9743,13 @@
       "summarySource": "articulo-1"
     }
   ],
-  "lastSyncedAt": "2026-10-11T16:26:34.856Z",
-  "lastAttemptAt": "2026-10-11T16:26:34.856Z",
+  "lastSyncedAt": "2026-10-12T20:01:34.372Z",
+  "lastAttemptAt": "2026-10-12T20:01:34.372Z",
   "syncStatus": "ok",
   "source": "https://www.boletinoficial.gov.ar/seccion/primera/",
-  "editionFrom": "2026-10-05",
-  "editionTo": "2026-10-11",
+  "editionFrom": "2026-10-06",
+  "editionTo": "2026-10-12",
   "itemCount": 456,
-  "newItemCount": 301,
+  "newItemCount": 245,
   "failedDates": []
 }
