@@ -13313,12 +13313,14 @@
     }
   ],
   "lastSyncedAt": "2026-10-16T15:03:01.477Z",
-  "lastAttemptAt": "2026-10-16T15:03:01.477Z",
-  "syncStatus": "ok",
+  "lastAttemptAt": "2026-10-17T13:58:44.763Z",
+  "syncStatus": "partial",
   "source": "https://www.boletinoficial.gov.ar/seccion/primera/",
-  "editionFrom": "2026-10-10",
-  "editionTo": "2026-10-16",
+  "editionFrom": "2026-10-11",
+  "editionTo": "2026-10-17",
   "itemCount": 623,
   "newItemCount": 167,
-  "failedDates": []
+  "failedDates": [
+    "2026-10-12"
+  ]
 }
