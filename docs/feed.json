@@ -16839,12 +16839,13 @@
     }
   ],
   "lastSyncedAt": "2026-10-21T15:42:07.343Z",
-  "lastAttemptAt": "2026-10-21T15:42:07.343Z",
-  "syncStatus": "ok",
+  "lastAttemptAt": "2026-10-22T15:44:07.263Z",
+  "syncStatus": "error",
   "source": "https://www.boletinoficial.gov.ar/seccion/primera/",
   "editionFrom": "2026-10-15",
   "editionTo": "2026-10-21",
   "itemCount": 789,
   "newItemCount": 230,
-  "failedDates": []
+  "failedDates": [],
+  "updateError": "BORA no disponible (HTTP 502)"
 }
