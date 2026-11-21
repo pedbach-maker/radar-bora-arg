@@ -25666,15 +25666,13 @@
       "summarySource": "articulo-1"
     }
   ],
-  "lastSyncedAt": "2026-11-19T19:12:56.087Z",
-  "lastAttemptAt": "2026-11-20T18:53:41.010Z",
-  "syncStatus": "partial",
+  "lastSyncedAt": "2026-11-21T17:49:06.738Z",
+  "lastAttemptAt": "2026-11-21T17:49:06.738Z",
+  "syncStatus": "ok",
   "source": "https://www.boletinoficial.gov.ar/seccion/primera/",
-  "editionFrom": "2026-11-14",
-  "editionTo": "2026-11-20",
+  "editionFrom": "2026-11-15",
+  "editionTo": "2026-11-21",
   "itemCount": 1204,
   "newItemCount": 248,
-  "failedDates": [
-    "2026-11-15"
-  ]
+  "failedDates": []
 }
